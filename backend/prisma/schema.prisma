@@ -1,0 +1,64 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model dan_rezervacije {
+  id             Int         @id @default(autoincrement())
+  rezervacija_id Int
+  zona_id        Int
+  datum_trke     DateTime    @db.Date
+  cena           Decimal     @db.Decimal(10, 2)
+  rezervacija    rezervacija @relation(fields: [rezervacija_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  zona           zona        @relation(fields: [zona_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model kupac {
+  id             Int           @id @default(autoincrement())
+  ime            String        @db.VarChar(100)
+  prezime        String        @db.VarChar(100)
+  email          String        @db.VarChar(255)
+  potvrda_emaila String?       @db.VarChar(255)
+  kompanija      String?       @db.VarChar(255)
+  adresa1        String?       @db.VarChar(255)
+  adresa2        String?       @db.VarChar(255)
+  postanski_broj String?       @db.VarChar(20)
+  mesto          String?       @db.VarChar(100)
+  drzava         String?       @db.VarChar(100)
+  promo_kod      promo_kod[]
+  rezervacija    rezervacija[]
+}
+
+model promo_kod {
+  kod                    String      @id @db.VarChar(50)
+  rezervacija_id         Int
+  status                 String      @db.VarChar(50)
+  iskoriscen_od_kupca_id Int?
+  kupac                  kupac?      @relation(fields: [iskoriscen_od_kupca_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  rezervacija            rezervacija @relation(fields: [rezervacija_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+}
+
+model rezervacija {
+  id              Int               @id @default(autoincrement())
+  kupac_id        Int
+  token           String            @unique @db.VarChar(255)
+  datum_kreiranja DateTime?         @default(now()) @db.Timestamp(6)
+  status          String            @db.VarChar(50)
+  dan_rezervacije dan_rezervacije[]
+  promo_kod       promo_kod[]
+  kupac           kupac             @relation(fields: [kupac_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+}
+
+model zona {
+  id                  Int               @id @default(autoincrement())
+  naziv               String            @db.VarChar(100)
+  kapacitet           Int
+  cena                Decimal           @db.Decimal(10, 2)
+  pogodna_za_invalide Boolean?          @default(false)
+  ima_ekran           Boolean?          @default(false)
+  dan_rezervacije     dan_rezervacije[]
+}
