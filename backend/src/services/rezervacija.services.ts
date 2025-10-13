@@ -55,3 +55,37 @@ export const prikaziRezervacijuService = async (token: string) => {
     },
   });
 };
+export const izmeniStatusRezervacijeService = async (
+  id: number,
+  status: string
+) => {
+  const rezervacija = await prisma.rezervacija.findUnique({ where: { id } });
+
+  if (!rezervacija) return null;
+
+  return await prisma.rezervacija.update({
+    where: { id },
+    data: { status },
+  });
+};
+export const prikaziSveRezervacijeService = async () => {
+  return await prisma.rezervacija.findMany({
+    orderBy: { datum_kreiranja: "desc" },
+    include: {
+      kupac: true,
+      promo_kod: true,
+      dan_rezervacije: {
+        include: {
+          zona: true,
+        },
+      },
+    },
+  });
+};
+export const obrisiRezervacijuService = async (id: number) => {
+  const postoji = await prisma.rezervacija.findUnique({ where: { id } });
+  if (!postoji) return null;
+
+  await prisma.rezervacija.delete({ where: { id } });
+  return true;
+};
