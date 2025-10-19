@@ -44,3 +44,5 @@ export type CenaInfo = {
   earlyBird: number;
   finalna: number;
 };
+
+export type ActionType = "kreiranje" | "izmena" | "otkazivanje";

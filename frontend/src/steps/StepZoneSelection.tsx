@@ -8,7 +8,6 @@ import {
 } from "../store/reservationSlice";
 import { useEffect, useState } from "react";
 import { ChevronDownIcon } from "@heroicons/react/24/solid";
-import axios from "axios";
 import { UserIcon, TvIcon } from "@heroicons/react/24/solid";
 import { ZonaSelection } from "../types/types";
 import { fetchZones } from "../services/zonesService";

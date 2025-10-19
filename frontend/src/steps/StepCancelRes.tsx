@@ -2,6 +2,8 @@ import { useState } from "react";
 import axios from "axios";
 import { useDispatch } from "react-redux";
 import { resetReservation, setStep } from "../store/reservationSlice";
+import { showAlert } from "../store/alertSlice";
+import { hideSpinner, showSpinner } from "../store/spinnerSlice";
 
 export default function StepCancelRes() {
   const dispatch = useDispatch();
@@ -18,7 +20,6 @@ export default function StepCancelRes() {
     setRezervacija(null);
     try {
       const res = await axios.get(`http://localhost:5000/rezervacija/${token}`);
-      console.log(res);
       if (res.data.kupac?.email !== email) {
         setGreska("Email ne odgovara rezervaciji.");
       } else {
@@ -40,9 +41,14 @@ export default function StepCancelRes() {
     if (!rezervacija?.id) return;
     setLoading(true);
     try {
+      dispatch(showSpinner());
       await axios.delete(`http://localhost:5000/rezervacija/${rezervacija.id}`);
+      dispatch(hideSpinner());
       setOtkazano(true);
       dispatch(resetReservation());
+      dispatch(
+        showAlert({ success: true, message: "Rezervacija uspešno otkazana!" })
+      );
     } catch {
       setGreska("Greška pri otkazivanju rezervacije.");
     } finally {

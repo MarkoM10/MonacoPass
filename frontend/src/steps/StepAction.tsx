@@ -3,11 +3,21 @@ import {
   PlusCircleIcon,
   XCircleIcon,
 } from "@heroicons/react/24/outline";
-export default function StepAkcija({
-  onOdabir,
-}: {
-  onOdabir: (action: "kreiranje" | "izmena" | "otkazivanje") => void;
-}) {
+import { useDispatch } from "react-redux";
+import { setAkcija, setStep } from "../store/reservationSlice";
+import { ActionType } from "../types/types";
+
+export default function StepAction() {
+  //Redux
+  const dispatch = useDispatch();
+
+  //Handling step rendering
+  const handleStepSelection = (action: ActionType) => {
+    dispatch(setAkcija(action));
+    dispatch(setStep(1));
+  };
+
+  //JSX cards
   const kartice = [
     {
       action: "kreiranje",
@@ -30,7 +40,7 @@ export default function StepAkcija({
       icon: <XCircleIcon className="w-10 h-10 text-red-500" />,
       style: "bg-white hover:bg-red-50 border border-red-400",
     },
-  ];
+  ] as const;
 
   return (
     <div className="space-y-8 text-center">
@@ -40,12 +50,11 @@ export default function StepAkcija({
       <p className="text-gray-600 text-lg">
         Odaberite akciju koju želite da izvršite
       </p>
-
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {kartice.map((k) => (
           <button
             key={k.action}
-            onClick={() => onOdabir(k.action as any)}
+            onClick={() => handleStepSelection(k.action)}
             className={`rounded-xl p-6 text-left shadow-sm transition-all ${k.style}`}
           >
             <div className="flex items-center gap-4 mb-4">{k.icon}</div>

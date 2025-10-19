@@ -70,7 +70,6 @@ export default function StepCustomerInfo() {
             </div>
           )}
         </div>
-
         <div>
           <input
             name="email"
@@ -85,7 +84,6 @@ export default function StepCustomerInfo() {
             </div>
           )}
         </div>
-
         <div>
           <input
             name="potvrda_emaila"
@@ -100,7 +98,6 @@ export default function StepCustomerInfo() {
             </div>
           )}
         </div>
-
         <div>
           <input
             name="adresa1"
@@ -115,7 +112,6 @@ export default function StepCustomerInfo() {
             </div>
           )}
         </div>
-
         <div>
           <input
             name="adresa2"
@@ -125,7 +121,6 @@ export default function StepCustomerInfo() {
             value={form.adresa2}
           />
         </div>
-
         <div>
           <input
             name="postanski_broj"
@@ -140,7 +135,6 @@ export default function StepCustomerInfo() {
             </div>
           )}
         </div>
-
         <div>
           <input
             name="mesto"
@@ -155,7 +149,6 @@ export default function StepCustomerInfo() {
             </div>
           )}
         </div>
-
         <div>
           <input
             name="drzava"
@@ -170,7 +163,6 @@ export default function StepCustomerInfo() {
             </div>
           )}
         </div>
-
         <div>
           <input
             name="kompanija"

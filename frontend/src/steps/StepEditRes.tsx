@@ -4,6 +4,8 @@ import { ChevronDownIcon } from "@heroicons/react/24/solid";
 import { resetReservation, setStep } from "../store/reservationSlice";
 import { useDispatch } from "react-redux";
 import { Dan, Zona } from "../types/types";
+import { showAlert } from "../store/alertSlice";
+import { hideSpinner, showSpinner } from "../store/spinnerSlice";
 
 export default function StepEditRes() {
   const [token, setToken] = useState("");
@@ -102,11 +104,18 @@ export default function StepEditRes() {
           zona_id: d.zona_id,
         })),
       };
-      console.log(payload);
+      dispatch(showSpinner());
       await axios.put("http://localhost:5000/rezervacija/izmeni", payload);
-      setPoruka("Rezervacija uspešno izmenjena.");
+      dispatch(hideSpinner());
+      dispatch(
+        showAlert({ success: true, message: "Rezervacija uspešno izmenjena!" })
+      );
+      dispatch(resetReservation());
     } catch {
       setPoruka("Greška pri izmeni rezervacije.");
+      dispatch(
+        showAlert({ success: false, message: "Greška pri izmeni rezervacije." })
+      );
     }
   };
 

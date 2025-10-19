@@ -32,7 +32,7 @@ type ReservationState = {
   dani: Dan[];
   promoKod: string;
   token?: string;
-  akcija: "kreiranje" | "izmena" | "otkazivanje";
+  action: "kreiranje" | "izmena" | "otkazivanje";
   step: number;
   zoneData: Zona[];
 };
@@ -51,7 +51,7 @@ const initialState: ReservationState = {
   zoneData: [],
   promoKod: "",
   token: undefined,
-  akcija: "kreiranje",
+  action: "kreiranje",
   step: 0,
 };
 
@@ -86,7 +86,7 @@ const reservationSlice = createSlice({
       state,
       action: PayloadAction<"kreiranje" | "izmena" | "otkazivanje">
     ) {
-      state.akcija = action.payload;
+      state.action = action.payload;
     },
     setStep(state, action: PayloadAction<number>) {
       state.step = action.payload;

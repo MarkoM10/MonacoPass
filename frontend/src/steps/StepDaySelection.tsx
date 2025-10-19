@@ -9,10 +9,13 @@ import {
 } from "../store/reservationSlice";
 
 export default function StepDaySelection() {
+  // Redux
   const dispatch = useDispatch();
   const izabraniDani = useSelector(
     (state: RootState) => state.reservation.dani
   );
+
+  // Local state
   const days = [
     { datum: "2025-05-25", label: "25. maj" },
     { datum: "2025-05-26", label: "26. maj" },
@@ -20,10 +23,13 @@ export default function StepDaySelection() {
   ];
   const [error, setError] = useState("");
 
+  //Checking initially selected days
   const isChecked = (datum: string) =>
     izabraniDani.some((d) => d.datum === datum);
 
+  // Toggling day selection removing and adding to the redux store
   const toggleDan = (datum: string, checked: boolean) => {
+    console.log(datum, checked);
     setError("");
     checked
       ? dispatch(addDan({ datum, zonaId: 0 }))

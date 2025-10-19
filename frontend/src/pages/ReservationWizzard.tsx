@@ -1,6 +1,5 @@
-import { useSelector, useDispatch } from "react-redux";
+import { useSelector } from "react-redux";
 import { RootState } from "../store/store";
-import { setAkcija, setStep } from "../store/reservationSlice";
 import StepCustomerInfo from "../steps/StepCustomerInfo";
 import StepDaySelection from "../steps/StepDaySelection";
 import StepZoneSelection from "../steps/StepZoneSelection";
@@ -16,8 +15,7 @@ import {
 } from "@heroicons/react/24/solid";
 
 export default function ReservationWizard() {
-  const dispatch = useDispatch();
-  const { akcija, step } = useSelector((state: RootState) => state.reservation);
+  const { action, step } = useSelector((state: RootState) => state.reservation);
   const steps = ["Kupac", "Dani", "Zone", "Pregled"];
   const stepIcons = [
     <UserIcon className="w-4 h-4 inline-block mr-1" />,
@@ -26,16 +24,9 @@ export default function ReservationWizard() {
     <ClipboardDocumentCheckIcon className="w-4 h-4 inline-block mr-1" />,
   ];
 
-  const handleActionPicker = (
-    odabrana: "kreiranje" | "izmena" | "otkazivanje"
-  ) => {
-    dispatch(setAkcija(odabrana));
-    dispatch(setStep(1));
-  };
-
   const renderStep = () => {
-    if (step === 0) return <StepAction onOdabir={handleActionPicker} />;
-    switch (akcija) {
+    if (step === 0) return <StepAction />;
+    switch (action) {
       case "kreiranje":
         switch (step) {
           case 1:
@@ -62,7 +53,7 @@ export default function ReservationWizard() {
     <div className="WizzardWrapper flex justify-center items-center min-h-screen">
       <div className="mx-auto p-6 max-w-6xl w-full">
         <div className="bg-white shadow-md rounded-lg p-6">
-          {step > 0 && akcija === "kreiranje" && (
+          {step > 0 && action === "kreiranje" && (
             <div className="flex gap-2 mb-8 justify-center">
               <div className="flex gap-2 mb-8 justify-center">
                 {steps.map((label, i) => (

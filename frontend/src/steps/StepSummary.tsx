@@ -8,6 +8,8 @@ import { prevStep, setToken } from "../store/reservationSlice";
 import { useEffect, useState } from "react";
 import ReservationResult from "../components/ReservationResult";
 import { CenaInfo } from "../types/types";
+import { showAlert } from "../store/alertSlice";
+import { hideSpinner, showSpinner } from "../store/spinnerSlice";
 
 export default function StepSummary() {
   //Redux
@@ -77,9 +79,14 @@ export default function StepSummary() {
   const handlePotvrdi = async () => {
     setLoading(true);
     try {
+      dispatch(showSpinner());
       const data = await kreirajRezervaciju(payload);
+      dispatch(hideSpinner());
       dispatch(setToken(data.token));
       setSuccess(true);
+      dispatch(
+        showAlert({ success: true, message: "Rezervacija uspešno kreirana!" })
+      );
     } catch (err) {
       setPoruka("Greška pri slanju rezervacije.");
     } finally {

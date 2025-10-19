@@ -1,5 +1,7 @@
 import { configureStore } from "@reduxjs/toolkit";
 import reservationReducer from "./reservationSlice";
+import alertReducer from "./alertSlice";
+import spinnerReducer from "./spinnerSlice";
 import storageSession from "redux-persist/lib/storage/session";
 import {
   persistReducer,
@@ -22,6 +24,8 @@ const persistedReducer = persistReducer(persistConfig, reservationReducer);
 export const store = configureStore({
   reducer: {
     reservation: persistedReducer,
+    alert: alertReducer,
+    toggleSpinner: spinnerReducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({
