@@ -1,7 +1,7 @@
 import { useState } from "react";
 import axios from "axios";
 import { useDispatch } from "react-redux";
-import { resetReservation } from "../store/reservationSlice";
+import { resetReservation, setStep } from "../store/reservationSlice";
 
 export default function StepCancelRes() {
   const dispatch = useDispatch();
@@ -29,6 +29,11 @@ export default function StepCancelRes() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handlePocetak = () => {
+    dispatch(resetReservation());
+    dispatch(setStep(0));
   };
 
   const handleOtkazi = async () => {
@@ -74,13 +79,21 @@ export default function StepCancelRes() {
           className="w-full px-4 py-2 border border-black rounded bg-white text-black placeholder-gray-500"
         />
       </div>
-      <button
-        onClick={handlePretraga}
-        disabled={loading || !token || !email}
-        className="px-6 py-2 rounded-full bg-primary-400 text-white font-semibold hover:bg-opacity-90 transition-colors"
-      >
-        {loading ? "Provera..." : "Pronađi rezervaciju"}
-      </button>
+      <div className="flex gap-2 mt-4">
+        <button
+          onClick={handlePocetak}
+          className="px-6 py-2 rounded-full border border-neutral text-neutral font-semibold hover:bg-opacity-90 transition-colors"
+        >
+          Vrati se na početak
+        </button>
+        <button
+          onClick={handlePretraga}
+          disabled={loading || !token || !email}
+          className="px-6 py-2 rounded-full bg-primary-400 text-white font-semibold hover:bg-opacity-90 transition-colors"
+        >
+          {loading ? "Provera..." : "Pretraži rezervaciju"}
+        </button>
+      </div>
 
       {greska && <div className="text-red-500 font-semibold">{greska}</div>}
 

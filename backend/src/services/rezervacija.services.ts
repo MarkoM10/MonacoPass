@@ -1,3 +1,4 @@
+import { Prisma } from "@prisma/client";
 import { prisma } from "../db";
 import { randomBytes } from "crypto";
 
@@ -82,10 +83,88 @@ export const prikaziSveRezervacijeService = async () => {
     },
   });
 };
+
 export const obrisiRezervacijuService = async (id: number) => {
   const postoji = await prisma.rezervacija.findUnique({ where: { id } });
   if (!postoji) return null;
 
   await prisma.rezervacija.delete({ where: { id } });
   return true;
+};
+
+export const pronadjiRezervacijuPoTokenuEmailu = async (
+  token: string,
+  email: string
+) => {
+  return prisma.rezervacija.findFirst({
+    where: {
+      token,
+      kupac: { email },
+    },
+    include: {
+      dan_rezervacije: true,
+      kupac: true,
+    },
+  });
+};
+
+export const obracunajCenu = async (
+  dani: { datum_trke: Date; zona_id: number }[]
+): Promise<number> => {
+  const brojDana = dani.length;
+  const popust = brojDana <= 1 ? 0 : brojDana === 2 ? 0.1 : 0.2;
+  const earlyBird = new Date() < new Date("2025-05-01") ? 0.1 : 0;
+
+  let ukupnaCena = 0;
+
+  for (const dan of dani) {
+    const zona = await prisma.zona.findUnique({ where: { id: dan.zona_id } });
+    if (zona) ukupnaCena += Number(zona.cena);
+  }
+
+  const finalnaCena = ukupnaCena * (1 - popust - earlyBird);
+  return parseFloat(finalnaCena.toFixed(2));
+};
+
+export const proveriDostupnostMesta = async (
+  datumTrke: Date,
+  zonaId: number
+): Promise<boolean> => {
+  const zona = await prisma.zona.findUnique({ where: { id: zonaId } });
+  if (!zona) return false;
+
+  const brojRezervacija = await prisma.dan_rezervacije.count({
+    where: { datum_trke: datumTrke, zona_id: zonaId },
+  });
+
+  return brojRezervacija < zona.kapacitet;
+};
+
+export const izmeniRezervacijuService = async (
+  rezervacijaId: number,
+  dani: { datum_trke: Date; zona_id: number }[],
+  novaCena: number
+) => {
+  await prisma.dan_rezervacije.deleteMany({
+    where: { rezervacija_id: rezervacijaId },
+  });
+
+  for (const dan of dani) {
+    const zona = await prisma.zona.findUnique({ where: { id: dan.zona_id } });
+
+    await prisma.dan_rezervacije.create({
+      data: {
+        rezervacija_id: rezervacijaId,
+        datum_trke: new Date(dan.datum_trke),
+        zona_id: dan.zona_id,
+        cena: zona?.cena ?? new Prisma.Decimal(0),
+      },
+    });
+  }
+
+  return prisma.rezervacija.update({
+    where: { id: rezervacijaId },
+    data: { status: "Izmenjena" },
+    include: { dan_rezervacije: true },
+  });
 };

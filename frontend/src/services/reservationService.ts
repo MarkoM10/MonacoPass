@@ -1,22 +1,5 @@
 import axios from "axios";
-
-type KupacPayload = {
-  ime: string;
-  prezime: string;
-  email: string;
-  adresa1: string;
-  adresa2?: string;
-  postanski_broj: string;
-  mesto: string;
-  drzava: string;
-  kompanija?: string;
-};
-
-type DanPayload = {
-  datumTrke: string;
-  cena: number;
-  zonaId: number;
-};
+import { DanPayload, KupacPayload } from "../types/types";
 
 export const kreirajRezervaciju = async (payload: {
   kupac: KupacPayload;
@@ -25,6 +8,17 @@ export const kreirajRezervaciju = async (payload: {
 }) => {
   const response = await axios.post(
     "http://localhost:5000/rezervacija",
+    payload
+  );
+  return response.data;
+};
+
+export const calculateReservationPrice = async (payload: {
+  dani: { datum_trke: string; zona_id: number }[];
+}) => {
+  console.log(payload);
+  const response = await axios.post(
+    "http://localhost:5000/rezervacija/obracunaj-cenu",
     payload
   );
   return response.data;

@@ -1,17 +1,27 @@
 import { useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { resetReservation, setKupac, setStep } from "../store/reservationSlice";
+import {
+  nextStep,
+  resetReservation,
+  setKupac,
+  setStep,
+} from "../store/reservationSlice";
 import { RootState } from "../store/store";
 import { validateKupac } from "../utils/formValidations";
 
-export default function StepCustomerInfo({ next }: { next: () => void }) {
-  const [errors, setErrors] = useState<Record<string, string>>({});
+export default function StepCustomerInfo() {
+  //Redux
   const dispatch = useDispatch();
   const { kupac } = useSelector((state: RootState) => state.reservation);
+
+  //States
+  const [errors, setErrors] = useState<Record<string, string>>({});
   const [form, setForm] = useState(kupac);
 
+  //Handlers
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
+    const { value, name } = e.target;
+    setForm({ ...form, [name]: value });
   };
 
   const handleSubmit = () => {
@@ -20,12 +30,11 @@ export default function StepCustomerInfo({ next }: { next: () => void }) {
       setErrors(validationErrors);
       return;
     }
-
     dispatch(setKupac(form));
-    next();
+    dispatch(nextStep());
   };
 
-  const handlePocetak = () => {
+  const handleStart = () => {
     dispatch(resetReservation());
     dispatch(setStep(0));
   };
@@ -174,7 +183,7 @@ export default function StepCustomerInfo({ next }: { next: () => void }) {
       </form>
       <div className="flex justify-between mt-8">
         <button
-          onClick={handlePocetak}
+          onClick={handleStart}
           className="px-6 py-2 rounded-full border border-neutral text-neutral font-semibold hover:bg-opacity-90 transition-colors"
         >
           Vrati se na početak

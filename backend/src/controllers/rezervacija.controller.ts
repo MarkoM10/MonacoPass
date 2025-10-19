@@ -1,10 +1,14 @@
 import { Request, Response } from "express";
 import {
+  izmeniRezervacijuService,
   izmeniStatusRezervacijeService,
   kreirajRezervacijuService,
+  obracunajCenu,
   obrisiRezervacijuService,
   prikaziRezervacijuService,
   prikaziSveRezervacijeService,
+  pronadjiRezervacijuPoTokenuEmailu,
+  proveriDostupnostMesta,
 } from "../services/rezervacija.services";
 
 export const kreirajRezervaciju = async (req: Request, res: Response) => {
@@ -32,6 +36,7 @@ export const prikaziRezervaciju = async (req: Request, res: Response) => {
     res.status(500).json({ error: "Greška pri dohvatanju rezervacije" });
   }
 };
+
 export const izmeniStatusRezervacije = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
@@ -52,6 +57,7 @@ export const izmeniStatusRezervacije = async (req: Request, res: Response) => {
     res.status(500).json({ error: "Greška pri izmeni statusa" });
   }
 };
+
 export const prikaziSveRezervacije = async (req: Request, res: Response) => {
   try {
     const rezervacije = await prikaziSveRezervacijeService();
@@ -61,6 +67,7 @@ export const prikaziSveRezervacije = async (req: Request, res: Response) => {
     res.status(500).json({ error: "Greška pri dohvaćanju rezervacija" });
   }
 };
+
 export const obrisiRezervaciju = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
@@ -74,5 +81,53 @@ export const obrisiRezervaciju = async (req: Request, res: Response) => {
   } catch (error) {
     console.error("Greška pri brisanju rezervacije:", error);
     res.status(500).json({ error: "Greška pri brisanju rezervacije" });
+  }
+};
+
+export const izmeniRezervaciju = async (req: Request, res: Response) => {
+  try {
+    const { token, email, dani } = req.body;
+
+    const rezervacija = await pronadjiRezervacijuPoTokenuEmailu(token, email);
+    if (!rezervacija) {
+      return res.status(404).json({ error: "Rezervacija nije pronađena" });
+    }
+
+    const novaCena = await obracunajCenu(dani);
+    const izmenjena = await izmeniRezervacijuService(
+      rezervacija.id,
+      dani,
+      novaCena
+    );
+
+    res.status(200).json({
+      poruka: "Rezervacija uspešno izmenjena",
+      rezervacija: izmenjena,
+    });
+  } catch (error) {
+    console.error("Greška pri izmeni rezervacije:", error);
+    res.status(500).json({ error: "Greška pri izmeni rezervacije" });
+  }
+};
+
+export const obracunajCenuHandler = async (req: Request, res: Response) => {
+  try {
+    const { dani } = req.body;
+    const brojDana = dani.length;
+    const popustNaDane = brojDana <= 1 ? 0 : brojDana === 2 ? 0.1 : 0.2;
+    const earlyBird = new Date() < new Date("2025-05-01") ? 0.1 : 0;
+
+    const finalna = await obracunajCenu(dani);
+    const ukupna = finalna / (1 - popustNaDane - earlyBird);
+
+    res.status(200).json({
+      ukupna: parseFloat(ukupna.toFixed(2)),
+      popustNaDane,
+      earlyBird,
+      finalna,
+    });
+  } catch (error) {
+    console.error("Greška pri obračunu cene:", error);
+    res.status(500).json({ error: "Greška pri obračunu cene" });
   }
 };

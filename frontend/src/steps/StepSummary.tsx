@@ -1,19 +1,22 @@
 import { useSelector, useDispatch } from "react-redux";
 import { RootState } from "../store/store";
-import { kreirajRezervaciju } from "../services/reservationService";
-import { setToken } from "../store/reservationSlice";
+import {
+  kreirajRezervaciju,
+  calculateReservationPrice,
+} from "../services/reservationService";
+import { prevStep, setToken } from "../store/reservationSlice";
 import { useEffect, useState } from "react";
 import ReservationResult from "../components/ReservationResult";
+import { CenaInfo } from "../types/types";
 
-type CenaInfo = {
-  ukupna: number;
-  popustNaDane: number;
-  earlyBird: number;
-  finalna: number;
-};
-
-export default function StepSummary({ prev }: { prev: () => void }) {
+export default function StepSummary() {
+  //Redux
   const dispatch = useDispatch();
+  const { dani, zoneData, kupac, promoKod } = useSelector(
+    (state: RootState) => state.reservation
+  );
+
+  //Local state
   const [loading, setLoading] = useState(false);
   const [poruka, setPoruka] = useState("");
   const [success, setSuccess] = useState(false);
@@ -25,38 +28,12 @@ export default function StepSummary({ prev }: { prev: () => void }) {
     finalna: 0,
   });
 
-  const { dani, zoneData, kupac, promoKod } = useSelector(
-    (state: RootState) => state.reservation
-  );
-
-  useEffect(() => {
-    const brojDana = dani.length;
-    const popustNaDane = brojDana <= 1 ? 0 : brojDana === 2 ? 0.1 : 0.2;
-    const earlyBird = new Date() < new Date("2025-05-01") ? 0.1 : 0;
-
-    const ukupna = dani.reduce((sum, dan) => {
-      const zona = zoneData.find((z) => z.id === dan.zonaId);
-      return zona ? sum + Number(zona.cena) : sum;
-    }, 0);
-
-    const finalna = ukupna * (1 - popustNaDane - earlyBird);
-
-    setCenaInfo({
-      ukupna: parseFloat(ukupna.toFixed(2)),
-      popustNaDane,
-      earlyBird,
-      finalna: parseFloat(finalna.toFixed(2)),
-    });
-
-    setCalculating(false);
-  }, [dani, zoneData]);
-
   const daniZaSlanje = dani.map((d) => {
     const zona = zoneData.find((z) => z.id === d.zonaId);
     return {
       datumTrke: d.datum,
-      cena: zona ? zona.cena : 0,
       zonaId: d.zonaId,
+      cena: zona ? Number(zona.cena) : 0,
     };
   });
 
@@ -75,6 +52,27 @@ export default function StepSummary({ prev }: { prev: () => void }) {
     dani: daniZaSlanje,
     promoKod: promoKod || undefined,
   };
+
+  useEffect(() => {
+    const fetchPrice = async () => {
+      try {
+        const daniZaObracun = dani.map((d) => ({
+          datum_trke: d.datum,
+          zona_id: d.zonaId,
+        }));
+
+        const data = await calculateReservationPrice({ dani: daniZaObracun });
+        setCenaInfo(data);
+      } catch (err) {
+        console.error("Greška pri obračunu cene:", err);
+        setPoruka("Greška pri obračunu cene.");
+      } finally {
+        setCalculating(false);
+      }
+    };
+
+    fetchPrice();
+  }, [dani]);
 
   const handlePotvrdi = async () => {
     setLoading(true);
@@ -102,7 +100,6 @@ export default function StepSummary({ prev }: { prev: () => void }) {
           <div>Email: {kupac.email}</div>
           <div>Dani: {dani.map((d) => d.datum).join(", ")}</div>
           <div>Promo kod: {promoKod || "Nema"}</div>
-
           {calculating ? (
             <div className="text-gray-500">Računam cenu...</div>
           ) : (
@@ -119,11 +116,10 @@ export default function StepSummary({ prev }: { prev: () => void }) {
               </div>
             </div>
           )}
-
           {poruka && <div className="text-primary font-semibold">{poruka}</div>}
           <div className="flex justify-between mt-6">
             <button
-              onClick={prev}
+              onClick={() => dispatch(prevStep())}
               className="px-6 py-2 rounded-full border border-neutral text-neutral font-semibold hover:bg-opacity-90 transition-colors"
             >
               Nazad

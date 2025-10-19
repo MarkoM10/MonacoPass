@@ -1,43 +1,43 @@
 import { useDispatch, useSelector } from "react-redux";
 import { RootState } from "../store/store";
-import { addDan, setZoneData } from "../store/reservationSlice";
+import {
+  addDan,
+  nextStep,
+  prevStep,
+  setZoneData,
+} from "../store/reservationSlice";
 import { useEffect, useState } from "react";
 import { ChevronDownIcon } from "@heroicons/react/24/solid";
 import axios from "axios";
 import { UserIcon, TvIcon } from "@heroicons/react/24/solid";
+import { ZonaSelection } from "../types/types";
+import { fetchZones } from "../services/zonesService";
 
-type Zona = {
-  id: number;
-  naziv: string;
-  kapacitet: number;
-  cena: string;
-  pogodna_za_invalide: boolean;
-  ima_ekran: boolean;
-};
-
-export default function StepZoneSelection({
-  next,
-  prev,
-}: {
-  next: () => void;
-  prev: () => void;
-}) {
+export default function StepZoneSelection() {
+  //Redux
   const dispatch = useDispatch();
   const dani = useSelector((state: RootState) => state.reservation.dani);
-  const [zone, setZone] = useState<Zona[]>([]);
+
+  //Local state
+  const [zone, setZone] = useState<ZonaSelection[]>([]);
   const [loading, setLoading] = useState(true);
   const [openDatum, setOpenDatum] = useState<string | null>(null);
   const [errors, setErrors] = useState<string[]>([]);
 
+  //Hooks and Handlers
   useEffect(() => {
-    axios
-      .get("http://localhost:5000/zone")
-      .then((res) => {
-        setZone(res.data);
-        dispatch(setZoneData(res.data));
-      })
-      .catch((err) => console.error("Greška pri učitavanju zona:", err))
-      .finally(() => setLoading(false));
+    const loadZones = async () => {
+      try {
+        const data = await fetchZones();
+        setZone(data);
+        dispatch(setZoneData(data));
+      } catch (err) {
+        console.error("Greška pri učitavanju zona:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadZones();
   }, []);
 
   const handleZonaToggle = (datum: string, zonaId: number) => {
@@ -63,7 +63,7 @@ export default function StepZoneSelection({
       return;
     }
     setErrors([]);
-    next();
+    dispatch(nextStep());
   };
 
   if (loading) return <div>Učitavanje zona...</div>;
@@ -71,7 +71,6 @@ export default function StepZoneSelection({
   return (
     <div className="space-y-6">
       <h3 className="text-xl font-bold">Izaberi zonu za svaki dan</h3>
-
       {dani.map((dan) => {
         const datumLabel = new Date(dan.datum).toLocaleDateString("sr-RS", {
           day: "2-digit",
@@ -104,7 +103,7 @@ export default function StepZoneSelection({
                       onClick={() => handleZonaToggle(dan.datum, zona.id)}
                       className={`w-full flex items-center justify-between px-4 py-2 rounded border transition-colors text-sm ${
                         selected
-                          ? "bg-primary-100 border-primary text-black font-semibold"
+                          ? "bg-secondary border-primary text-black font-semibold"
                           : "bg-white border-gray-300 hover:bg-gray-100 text-gray-800"
                       }`}
                     >
@@ -136,7 +135,7 @@ export default function StepZoneSelection({
 
       <div className="flex justify-between mt-8">
         <button
-          onClick={prev}
+          onClick={() => dispatch(prevStep())}
           className="px-6 py-2 rounded-full border border-neutral text-neutral font-semibold hover:bg-opacity-90 transition-colors"
         >
           Nazad
