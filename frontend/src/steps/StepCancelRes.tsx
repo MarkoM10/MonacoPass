@@ -125,13 +125,6 @@ export default function StepCancelRes() {
               ))}
             </ul>
           </div>
-          <div>
-            Promo kod:{" "}
-            {rezervacija.promo_kod?.length > 0
-              ? rezervacija.promo_kod.map((p: any) => p.kod).join(", ")
-              : "Nema"}
-          </div>
-
           <div className="flex gap-4 mt-4">
             <button
               onClick={handleOtkazi}

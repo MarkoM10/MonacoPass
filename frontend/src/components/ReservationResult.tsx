@@ -5,7 +5,11 @@ import { CheckBadgeIcon } from "@heroicons/react/24/solid";
 
 export default function ReservationResult() {
   const dispatch = useDispatch();
-  const { kupac, token } = useSelector((state: RootState) => state.reservation);
+  const { kupac, token, promoKod } = useSelector(
+    (state: RootState) => state.reservation
+  );
+
+  console.log(promoKod);
 
   const handlePocetak = () => {
     dispatch(resetReservation());
@@ -31,6 +35,15 @@ export default function ReservationResult() {
         Vaš token za izmenu/otkazivanje je:
       </p>
       <div className="text-xl font-mono text-primary">{token}</div>
+      <div className="mt-4 p-4 border rounded bg-primary-50 text-primary-800">
+        <h4 className="font-semibold text-lg mb-2">Tvoj promo-kod</h4>
+        <div className="text-xl font-bold tracking-wide">{promoKod}</div>
+        <p className="text-sm mt-2">
+          Podeli ovaj kod sa prijateljem on dobija 5% popusta, a ti poklon ispod
+          sedišta!
+        </p>
+      </div>
+
       <button
         onClick={handlePocetak}
         className="mt-6 px-6 py-2 rounded bg-primary-400 text-white font-semibold hover:bg-opacity-90 transition"

@@ -109,7 +109,8 @@ export const pronadjiRezervacijuPoTokenuEmailu = async (
 };
 
 export const obracunajCenu = async (
-  dani: { datum_trke: Date; zona_id: number }[]
+  dani: { datum_trke: Date; zona_id: number }[],
+  promoKod?: string
 ): Promise<number> => {
   const brojDana = dani.length;
   const popust = brojDana <= 1 ? 0 : brojDana === 2 ? 0.1 : 0.2;
@@ -120,6 +121,15 @@ export const obracunajCenu = async (
   for (const dan of dani) {
     const zona = await prisma.zona.findUnique({ where: { id: dan.zona_id } });
     if (zona) ukupnaCena += Number(zona.cena);
+  }
+
+  if (promoKod) {
+    const promo = await prisma.promo_kod.findUnique({
+      where: { kod: promoKod },
+    });
+    if (promo && promo.iskoriscen_od_kupca_id === null) {
+      ukupnaCena *= 0.95;
+    }
   }
 
   const finalnaCena = ukupnaCena * (1 - popust - earlyBird);

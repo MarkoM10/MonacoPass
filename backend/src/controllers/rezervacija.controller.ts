@@ -112,12 +112,12 @@ export const izmeniRezervaciju = async (req: Request, res: Response) => {
 
 export const obracunajCenuHandler = async (req: Request, res: Response) => {
   try {
-    const { dani } = req.body;
+    const { dani, promoKod } = req.body;
     const brojDana = dani.length;
     const popustNaDane = brojDana <= 1 ? 0 : brojDana === 2 ? 0.1 : 0.2;
     const earlyBird = new Date() < new Date("2025-05-01") ? 0.1 : 0;
 
-    const finalna = await obracunajCenu(dani);
+    const finalna = await obracunajCenu(dani, promoKod);
     const ukupna = finalna / (1 - popustNaDane - earlyBird);
 
     res.status(200).json({

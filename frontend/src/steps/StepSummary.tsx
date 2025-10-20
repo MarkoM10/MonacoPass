@@ -4,25 +4,30 @@ import {
   kreirajRezervaciju,
   calculateReservationPrice,
 } from "../services/reservationService";
-import { prevStep, setToken } from "../store/reservationSlice";
+import {
+  proveriPromoKod,
+  oznaciPromoKodKaoIskoriscen,
+} from "../services/promoService";
+import { prevStep, setPromoKod, setToken } from "../store/reservationSlice";
 import { useEffect, useState } from "react";
 import ReservationResult from "../components/ReservationResult";
-import { CenaInfo } from "../types/types";
+import { CenaInfo, DanPayload } from "../types/types";
 import { showAlert } from "../store/alertSlice";
 import { hideSpinner, showSpinner } from "../store/spinnerSlice";
 
 export default function StepSummary() {
-  //Redux
   const dispatch = useDispatch();
-  const { dani, zoneData, kupac, promoKod } = useSelector(
+  const { dani, zoneData, kupac } = useSelector(
     (state: RootState) => state.reservation
   );
 
-  //Local state
   const [loading, setLoading] = useState(false);
-  const [poruka, setPoruka] = useState("");
   const [success, setSuccess] = useState(false);
-  const [calculating, setCalculating] = useState(true);
+  const [poruka, setPoruka] = useState("");
+  const [calculating, setCalculating] = useState(false);
+  const [promoKodInput, setPromoKodInput] = useState("");
+  const [promoPoruka, setPromoPoruka] = useState("");
+  const [promoValidan, setPromoValidan] = useState(false);
   const [cenaInfo, setCenaInfo] = useState<CenaInfo>({
     ukupna: 0,
     popustNaDane: 0,
@@ -30,7 +35,7 @@ export default function StepSummary() {
     finalna: 0,
   });
 
-  const daniZaSlanje = dani.map((d) => {
+  const daniZaSlanje: DanPayload[] = dani.map((d) => {
     const zona = zoneData.find((z) => z.id === d.zonaId);
     return {
       datumTrke: d.datum,
@@ -39,50 +44,85 @@ export default function StepSummary() {
     };
   });
 
-  const payload = {
-    kupac: {
-      ime: kupac.ime,
-      prezime: kupac.prezime,
-      email: kupac.email,
-      kompanija: kupac.kompanija || "",
-      adresa1: kupac.adresa1,
-      adresa2: kupac.adresa2 || "",
-      postanski_broj: kupac.postanski_broj,
-      mesto: kupac.mesto,
-      drzava: kupac.drzava,
-    },
-    dani: daniZaSlanje,
-    promoKod: promoKod || undefined,
+  const fetchPrice = async (promoKod?: string) => {
+    setCalculating(true);
+    try {
+      const daniZaObracun = dani.map((d) => ({
+        datum_trke: d.datum,
+        zona_id: d.zonaId,
+      }));
+
+      const data = await calculateReservationPrice({
+        dani: daniZaObracun,
+        promoKod,
+      });
+
+      setCenaInfo(data);
+    } catch (err) {
+      console.error("Greška pri obračunu cene:", err);
+      setPoruka("Greška pri obračunu cene.");
+    } finally {
+      setCalculating(false);
+    }
   };
 
   useEffect(() => {
-    const fetchPrice = async () => {
-      try {
-        const daniZaObracun = dani.map((d) => ({
-          datum_trke: d.datum,
-          zona_id: d.zonaId,
-        }));
-
-        const data = await calculateReservationPrice({ dani: daniZaObracun });
-        setCenaInfo(data);
-      } catch (err) {
-        console.error("Greška pri obračunu cene:", err);
-        setPoruka("Greška pri obračunu cene.");
-      } finally {
-        setCalculating(false);
-      }
-    };
-
     fetchPrice();
   }, [dani]);
+
+  const handleProveraPromoKoda = async () => {
+    setPromoPoruka("");
+    setPromoValidan(false);
+
+    const kod = promoKodInput.trim();
+    if (!kod) {
+      setPromoPoruka("Unesite promo-kod.");
+      return;
+    }
+
+    const data = await proveriPromoKod(kod);
+    if (!data || !data.kod) {
+      setPromoPoruka("Promo-kod nije pronađen.");
+    } else if (data.status === "Iskorišćen" || data.iskoriscen_od_kupca_id) {
+      setPromoPoruka("Promo-kod je već iskorišćen.");
+    } else {
+      setPromoPoruka("Promo-kod je uspešno primenjen! 🎉");
+      setPromoValidan(true);
+      fetchPrice(kod);
+    }
+  };
 
   const handlePotvrdi = async () => {
     setLoading(true);
     try {
       dispatch(showSpinner());
+
+      const payload = {
+        kupac: {
+          ime: kupac.ime,
+          prezime: kupac.prezime,
+          email: kupac.email,
+          kompanija: kupac.kompanija || "",
+          adresa1: kupac.adresa1,
+          adresa2: kupac.adresa2 || "",
+          postanski_broj: kupac.postanski_broj,
+          mesto: kupac.mesto,
+          drzava: kupac.drzava,
+        },
+        dani: daniZaSlanje,
+        promoKod: promoValidan ? promoKodInput.trim() : undefined,
+      };
+
       const data = await kreirajRezervaciju(payload);
-      dispatch(hideSpinner());
+      const { kod } = data.promo_kod?.[0] || {};
+      if (kod) dispatch(setPromoKod(kod));
       dispatch(setToken(data.token));
+
+      if (promoValidan) {
+        await oznaciPromoKodKaoIskoriscen(promoKodInput.trim(), data.kupac.id);
+      }
+
+      dispatch(hideSpinner());
       setSuccess(true);
       dispatch(
         showAlert({ success: true, message: "Rezervacija uspešno kreirana!" })
@@ -106,7 +146,6 @@ export default function StepSummary() {
           </div>
           <div>Email: {kupac.email}</div>
           <div>Dani: {dani.map((d) => d.datum).join(", ")}</div>
-          <div>Promo kod: {promoKod || "Nema"}</div>
           {calculating ? (
             <div className="text-gray-500">Računam cenu...</div>
           ) : (
@@ -123,7 +162,35 @@ export default function StepSummary() {
               </div>
             </div>
           )}
+
           {poruka && <div className="text-primary font-semibold">{poruka}</div>}
+
+          <div className="space-y-2 mt-4">
+            <label
+              htmlFor="promo"
+              className="font-medium text-sm text-gray-700"
+            >
+              Imaš promo-kod od prijatelja?
+            </label>
+            <input
+              type="text"
+              id="promo"
+              value={promoKodInput}
+              onChange={(e) => setPromoKodInput(e.target.value)}
+              className="w-full px-4 py-2 border border-gray-300 rounded"
+              placeholder="Unesi promo-kod"
+            />
+            <button
+              onClick={handleProveraPromoKoda}
+              className="px-4 py-2 bg-primary-400 text-white rounded hover:bg-opacity-90"
+            >
+              Primeni kod
+            </button>
+            {promoPoruka && (
+              <div className="text-sm text-red-500 mt-2">{promoPoruka}</div>
+            )}
+          </div>
+
           <div className="flex justify-between mt-6">
             <button
               onClick={() => dispatch(prevStep())}
