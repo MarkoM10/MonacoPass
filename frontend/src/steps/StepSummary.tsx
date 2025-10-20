@@ -14,13 +14,16 @@ import ReservationResult from "../components/ReservationResult";
 import { CenaInfo, DanPayload } from "../types/types";
 import { showAlert } from "../store/alertSlice";
 import { hideSpinner, showSpinner } from "../store/spinnerSlice";
+import { kreirajPayloadRezervacije } from "../utils/reservation";
 
 export default function StepSummary() {
+  //Redux
   const dispatch = useDispatch();
   const { dani, zoneData, kupac } = useSelector(
     (state: RootState) => state.reservation
   );
 
+  //Local state
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const [poruka, setPoruka] = useState("");
@@ -51,12 +54,10 @@ export default function StepSummary() {
         datum_trke: d.datum,
         zona_id: d.zonaId,
       }));
-
       const data = await calculateReservationPrice({
         dani: daniZaObracun,
         promoKod,
       });
-
       setCenaInfo(data);
     } catch (err) {
       console.error("Greška pri obračunu cene:", err);
@@ -73,7 +74,6 @@ export default function StepSummary() {
   const handleProveraPromoKoda = async () => {
     setPromoPoruka("");
     setPromoValidan(false);
-
     const kod = promoKodInput.trim();
     if (!kod) {
       setPromoPoruka("Unesite promo-kod.");
@@ -96,32 +96,18 @@ export default function StepSummary() {
     setLoading(true);
     try {
       dispatch(showSpinner());
-
-      const payload = {
-        kupac: {
-          ime: kupac.ime,
-          prezime: kupac.prezime,
-          email: kupac.email,
-          kompanija: kupac.kompanija || "",
-          adresa1: kupac.adresa1,
-          adresa2: kupac.adresa2 || "",
-          postanski_broj: kupac.postanski_broj,
-          mesto: kupac.mesto,
-          drzava: kupac.drzava,
-        },
-        dani: daniZaSlanje,
-        promoKod: promoValidan ? promoKodInput.trim() : undefined,
-      };
-
+      const payload = kreirajPayloadRezervacije(
+        kupac,
+        daniZaSlanje,
+        promoValidan ? promoKodInput.trim() : undefined
+      );
       const data = await kreirajRezervaciju(payload);
       const { kod } = data.promo_kod?.[0] || {};
       if (kod) dispatch(setPromoKod(kod));
       dispatch(setToken(data.token));
-
       if (promoValidan) {
         await oznaciPromoKodKaoIskoriscen(promoKodInput.trim(), data.kupac.id);
       }
-
       dispatch(hideSpinner());
       setSuccess(true);
       dispatch(

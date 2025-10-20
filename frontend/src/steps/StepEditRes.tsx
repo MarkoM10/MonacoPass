@@ -1,11 +1,16 @@
 import { useState, useEffect } from "react";
-import axios from "axios";
-import { ChevronDownIcon } from "@heroicons/react/24/solid";
+import {
+  pretraziRezervacijuZaIzmenu,
+  izracunajCenuIzmene,
+  potvrdiIzmenuRezervacije,
+} from "../services/reservationService";
+
 import { resetReservation, setStep } from "../store/reservationSlice";
 import { useDispatch } from "react-redux";
 import { Dan, Zona } from "../types/types";
 import { showAlert } from "../store/alertSlice";
 import { hideSpinner, showSpinner } from "../store/spinnerSlice";
+import { fetchZones } from "../services/zonesService";
 
 export default function StepEditRes() {
   const [token, setToken] = useState("");
@@ -25,9 +30,16 @@ export default function StepEditRes() {
   const dispatch = useDispatch();
 
   useEffect(() => {
-    axios
-      .get("http://localhost:5000/zone")
-      .then((res) => setZoneData(res.data));
+    const loadZones = async () => {
+      try {
+        const zones = await fetchZones();
+        setZoneData(zones);
+      } catch (err) {
+        console.error("Greška pri učitavanju zona:", err);
+      }
+    };
+
+    loadZones();
   }, []);
 
   const handlePocetak = () => {
@@ -37,27 +49,33 @@ export default function StepEditRes() {
 
   const handlePretrazi = async () => {
     setLoading(true);
-    try {
-      const res = await axios.get(`http://localhost:5000/rezervacija/${token}`);
-      if (res.data.kupac.email !== email) {
-        setPoruka("Email ne odgovara rezervaciji.");
-        setLoading(false);
-        return;
-      }
-      setRezervacija(res.data.dan_rezervacije);
-      const dani = res.data.dan_rezervacije.map((d: any) => ({
-        datum_trke: new Date(d.datum_trke).toISOString().split("T")[0],
-        zona_id: d.zona_id,
-        cena: Number(d.cena),
-      }));
-      setIzabraniDani(dani);
-      setPoruka("");
-      await izracunajCenu(res.data.dan_rezervacije);
-    } catch {
+    const data = await pretraziRezervacijuZaIzmenu(token);
+    if (!data) {
       setPoruka("Rezervacija nije pronađena.");
-    } finally {
       setLoading(false);
+      return;
     }
+    if (data.kupac.email !== email) {
+      setPoruka("Email ne odgovara rezervaciji.");
+      setLoading(false);
+      return;
+    }
+
+    setRezervacija(data.dan_rezervacije);
+
+    const dani = data.dan_rezervacije.map((d) => ({
+      datum_trke: new Date(d.datum_trke).toISOString().split("T")[0],
+      zona_id: d.zona_id,
+      cena: Number(d.cena),
+    }));
+
+    setIzabraniDani(dani);
+    setPoruka("");
+
+    const cena = await izracunajCenuIzmene(dani);
+    if (cena) setCenaInfo(cena);
+
+    setLoading(false);
   };
 
   const handleToggleDan = async (datum: string, zona_id: number) => {
@@ -76,36 +94,15 @@ export default function StepEditRes() {
   };
 
   const izracunajCenu = async (dani: Dan[]) => {
-    const payload = dani.map((d) => ({
-      datum_trke: d.datum_trke,
-      zona_id: d.zona_id,
-    }));
-
-    try {
-      const res = await axios.post(
-        "http://localhost:5000/rezervacija/obracunaj-cenu",
-        {
-          dani: payload,
-        }
-      );
-      setCenaInfo(res.data);
-    } catch {
-      setPoruka("Greška pri obračunu cene.");
-    }
+    const cena = await izracunajCenuIzmene(dani);
+    if (cena) setCenaInfo(cena);
+    else setPoruka("Greška pri obračunu cene.");
   };
 
   const handlePotvrdiIzmenu = async () => {
     try {
-      const payload = {
-        token,
-        email,
-        dani: izabraniDani.map((d) => ({
-          datum_trke: d.datum_trke,
-          zona_id: d.zona_id,
-        })),
-      };
       dispatch(showSpinner());
-      await axios.put("http://localhost:5000/rezervacija/izmeni", payload);
+      await potvrdiIzmenuRezervacije(token, email, izabraniDani);
       dispatch(hideSpinner());
       dispatch(
         showAlert({ success: true, message: "Rezervacija uspešno izmenjena!" })
@@ -154,7 +151,6 @@ export default function StepEditRes() {
           </button>
         </div>
       </div>
-
       {rezervacija.length > 0 && (
         <div className="space-y-4">
           <h4 className="font-semibold">Izaberi dane i zone</h4>
@@ -183,7 +179,6 @@ export default function StepEditRes() {
               </div>
             </div>
           ))}
-
           <div className="space-y-1">
             <div>Ukupna cena bez popusta: {cenaInfo.ukupna.toFixed(2)} €</div>
             <div>
@@ -196,7 +191,6 @@ export default function StepEditRes() {
               Ukupno za naplatu: {cenaInfo.finalna.toFixed(2)} €
             </div>
           </div>
-
           <button
             onClick={handlePotvrdiIzmenu}
             className="px-6 py-2 rounded-full bg-primary-400 text-white font-semibold hover:bg-opacity-90 transition-colors"
@@ -205,7 +199,6 @@ export default function StepEditRes() {
           </button>
         </div>
       )}
-
       {poruka && <div className="text-red-500 font-semibold">{poruka}</div>}
     </div>
   );

@@ -15,7 +15,10 @@ import {
 } from "@heroicons/react/24/solid";
 
 export default function ReservationWizard() {
+  //Redux
   const { action, step } = useSelector((state: RootState) => state.reservation);
+
+  //Step labels and icons
   const steps = ["Kupac", "Dani", "Zone", "Pregled"];
   const stepIcons = [
     <UserIcon className="w-4 h-4 inline-block mr-1" />,
@@ -24,6 +27,7 @@ export default function ReservationWizard() {
     <ClipboardDocumentCheckIcon className="w-4 h-4 inline-block mr-1" />,
   ];
 
+  //Rendering steps based on action and step
   const renderStep = () => {
     if (step === 0) return <StepAction />;
     switch (action) {

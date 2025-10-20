@@ -1,9 +1,12 @@
 import { useState } from "react";
-import axios from "axios";
 import { useDispatch } from "react-redux";
 import { resetReservation, setStep } from "../store/reservationSlice";
 import { showAlert } from "../store/alertSlice";
 import { hideSpinner, showSpinner } from "../store/spinnerSlice";
+import {
+  pretraziRezervaciju,
+  otkaziRezervaciju,
+} from "../services/reservationService";
 
 export default function StepCancelRes() {
   const dispatch = useDispatch();
@@ -12,24 +15,20 @@ export default function StepCancelRes() {
   const [rezervacija, setRezervacija] = useState<any>(null);
   const [greska, setGreska] = useState("");
   const [loading, setLoading] = useState(false);
-  const [otkazano, setOtkazano] = useState(false);
 
   const handlePretraga = async () => {
     setLoading(true);
     setGreska("");
     setRezervacija(null);
-    try {
-      const res = await axios.get(`http://localhost:5000/rezervacija/${token}`);
-      if (res.data.kupac?.email !== email) {
-        setGreska("Email ne odgovara rezervaciji.");
-      } else {
-        setRezervacija(res.data);
-      }
-    } catch {
+    const data = await pretraziRezervaciju(token);
+    if (!data) {
       setGreska("Nevažeći token.");
-    } finally {
-      setLoading(false);
+    } else if (data.kupac?.email !== email) {
+      setGreska("Email ne odgovara rezervaciji.");
+    } else {
+      setRezervacija(data);
     }
+    setLoading(false);
   };
 
   const handlePocetak = () => {
@@ -42,9 +41,8 @@ export default function StepCancelRes() {
     setLoading(true);
     try {
       dispatch(showSpinner());
-      await axios.delete(`http://localhost:5000/rezervacija/${rezervacija.id}`);
+      await otkaziRezervaciju(rezervacija.id);
       dispatch(hideSpinner());
-      setOtkazano(true);
       dispatch(resetReservation());
       dispatch(
         showAlert({ success: true, message: "Rezervacija uspešno otkazana!" })
@@ -56,16 +54,6 @@ export default function StepCancelRes() {
     }
   };
 
-  if (otkazano) {
-    return (
-      <div className="text-center space-y-6">
-        <h2 className="text-2xl font-bold text-red-600">
-          Rezervacija je uspešno otkazana.
-        </h2>
-        <p className="text-gray-700">Token i promo kod su deaktivirani.</p>
-      </div>
-    );
-  }
   return (
     <div className="space-y-6">
       <h3 className="text-xl font-bold">Otkazivanje rezervacije</h3>
@@ -100,9 +88,7 @@ export default function StepCancelRes() {
           {loading ? "Provera..." : "Pretraži rezervaciju"}
         </button>
       </div>
-
       {greska && <div className="text-red-500 font-semibold">{greska}</div>}
-
       {rezervacija && (
         <div className="border rounded p-4 space-y-4 bg-gray-50">
           <h4 className="font-semibold text-lg">Detalji rezervacije</h4>

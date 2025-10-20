@@ -9,8 +9,6 @@ export default function ReservationResult() {
     (state: RootState) => state.reservation
   );
 
-  console.log(promoKod);
-
   const handlePocetak = () => {
     dispatch(resetReservation());
     dispatch(setStep(0));
