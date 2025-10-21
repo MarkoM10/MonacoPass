@@ -1,40 +1,17 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
+import { KupacPayload, Dan, ZonaSelection, ActionType } from "../types/types";
 
-type Kupac = {
-  ime: string;
-  prezime: string;
-  email: string;
-  potvrda_emaila?: string;
-  adresa1: string;
-  adresa2?: string;
-  postanski_broj: string;
-  mesto: string;
-  drzava: string;
-  kompanija?: string;
-};
-
-type Dan = {
-  datum: string;
-  zonaId: number;
-};
-
-type Zona = {
-  id: number;
-  naziv: string;
-  kapacitet: number;
-  cena: number;
-  pogodna_za_invalide: boolean;
-  ima_ekran: boolean;
-};
-
-type ReservationState = {
-  kupac: Kupac;
-  dani: Dan[];
+export type ReservationState = {
+  kupac: KupacPayload;
+  dani: {
+    datum: string;
+    zonaId: number;
+  }[];
   promoKod: string;
   token?: string;
-  action: "kreiranje" | "izmena" | "otkazivanje";
+  action: ActionType;
   step: number;
-  zoneData: Zona[];
+  zoneData: ZonaSelection[];
 };
 
 const initialState: ReservationState = {
@@ -59,10 +36,10 @@ const reservationSlice = createSlice({
   name: "reservation",
   initialState,
   reducers: {
-    setKupac(state, action: PayloadAction<Kupac>) {
+    setKupac(state, action: PayloadAction<KupacPayload>) {
       state.kupac = action.payload;
     },
-    addDan(state, action: PayloadAction<Dan>) {
+    addDan(state, action: PayloadAction<{ datum: string; zonaId: number }>) {
       const postoji = state.dani.find((d) => d.datum === action.payload.datum);
       if (!postoji) state.dani.push(action.payload);
       else postoji.zonaId = action.payload.zonaId;
@@ -73,7 +50,7 @@ const reservationSlice = createSlice({
     setPromoKod(state, action: PayloadAction<string>) {
       state.promoKod = action.payload;
     },
-    setZoneData(state, action: PayloadAction<Zona[]>) {
+    setZoneData(state, action: PayloadAction<ZonaSelection[]>) {
       state.zoneData = action.payload;
     },
     setToken(state, action: PayloadAction<string>) {
@@ -82,10 +59,7 @@ const reservationSlice = createSlice({
     resetReservation() {
       return { ...initialState, step: 0 };
     },
-    setAkcija(
-      state,
-      action: PayloadAction<"kreiranje" | "izmena" | "otkazivanje">
-    ) {
+    setAkcija(state, action: PayloadAction<ActionType>) {
       state.action = action.payload;
     },
     setStep(state, action: PayloadAction<number>) {

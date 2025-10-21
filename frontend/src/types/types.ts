@@ -5,12 +5,6 @@ export type Dan = {
   cena: number;
 };
 
-export type DanPayload = {
-  datumTrke: string;
-  zonaId: number;
-  cena: number;
-};
-
 // Kupac
 export type KupacPayload = {
   ime: string;
@@ -68,7 +62,7 @@ export type PromoKodInfo = {
 // Rezervacija
 export type KreirajRezervacijuPayload = {
   kupac: KupacPayload;
-  dani: DanPayload[];
+  dani: Dan[];
   promoKod?: string;
 };
 
@@ -90,6 +84,24 @@ export type RezervacijaDetalji = {
     id: number;
     datum_trke: string;
     cena: number;
+    zona: {
+      naziv: string;
+    };
+  }[];
+};
+
+export type RezervacijaZaIzmenu = {
+  id: number;
+  kupac: {
+    ime: string;
+    prezime: string;
+    email: string;
+  };
+  dan_rezervacije: {
+    id: number;
+    datum_trke: string;
+    cena: number;
+    zona_id: number;
     zona: {
       naziv: string;
     };

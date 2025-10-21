@@ -2,7 +2,7 @@ import { useSelector, useDispatch } from "react-redux";
 import { RootState } from "../store/store";
 import {
   kreirajRezervaciju,
-  calculateReservationPrice,
+  izracunajCenuRezervacije,
 } from "../services/reservationService";
 import {
   proveriPromoKod,
@@ -11,7 +11,7 @@ import {
 import { prevStep, setPromoKod, setToken } from "../store/reservationSlice";
 import { useEffect, useState } from "react";
 import ReservationResult from "../components/ReservationResult";
-import { CenaInfo, DanPayload } from "../types/types";
+import { CenaInfo, Dan } from "../types/types";
 import { showAlert } from "../store/alertSlice";
 import { hideSpinner, showSpinner } from "../store/spinnerSlice";
 import { kreirajPayloadRezervacije } from "../utils/reservation";
@@ -38,11 +38,11 @@ export default function StepSummary() {
     finalna: 0,
   });
 
-  const daniZaSlanje: DanPayload[] = dani.map((d) => {
+  const daniZaSlanje: Dan[] = dani.map((d) => {
     const zona = zoneData.find((z) => z.id === d.zonaId);
     return {
-      datumTrke: d.datum,
-      zonaId: d.zonaId,
+      datum_trke: d.datum,
+      zona_id: d.zonaId,
       cena: zona ? Number(zona.cena) : 0,
     };
   });
@@ -54,7 +54,7 @@ export default function StepSummary() {
         datum_trke: d.datum,
         zona_id: d.zonaId,
       }));
-      const data = await calculateReservationPrice({
+      const data = await izracunajCenuRezervacije({
         dani: daniZaObracun,
         promoKod,
       });
@@ -85,6 +85,8 @@ export default function StepSummary() {
       setPromoPoruka("Promo-kod nije pronađen.");
     } else if (data.status === "Iskorišćen" || data.iskoriscen_od_kupca_id) {
       setPromoPoruka("Promo-kod je već iskorišćen.");
+    } else if (data.status === "Nevažeći") {
+      setPromoPoruka("Promo-kod je nevažeći.");
     } else {
       setPromoPoruka("Promo-kod je uspešno primenjen! 🎉");
       setPromoValidan(true);

@@ -13,6 +13,7 @@ export const prikaziPromoKodService = async (kod: string) => {
     },
   });
 };
+
 export const iskoristiPromoKodService = async (
   kod: string,
   kupacId: number

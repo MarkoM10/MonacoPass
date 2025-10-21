@@ -19,6 +19,7 @@ export const prikaziPromoKod = async (req: Request, res: Response) => {
     res.status(500).json({ error: "Greška pri dohvatanju promo koda" });
   }
 };
+
 export const iskoristiPromoKod = async (req: Request, res: Response) => {
   try {
     const { kod } = req.params;

@@ -29,7 +29,6 @@ export default function StepDaySelection() {
 
   // Toggling day selection removing and adding to the redux store
   const toggleDan = (datum: string, checked: boolean) => {
-    console.log(datum, checked);
     setError("");
     checked
       ? dispatch(addDan({ datum, zonaId: 0 }))

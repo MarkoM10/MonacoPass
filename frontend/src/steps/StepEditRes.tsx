@@ -1,10 +1,9 @@
 import { useState, useEffect } from "react";
 import {
-  pretraziRezervacijuZaIzmenu,
+  pretraziRezervaciju,
   izracunajCenuIzmene,
   potvrdiIzmenuRezervacije,
 } from "../services/reservationService";
-
 import { resetReservation, setStep } from "../store/reservationSlice";
 import { useDispatch } from "react-redux";
 import { Dan, Zona } from "../types/types";
@@ -49,9 +48,9 @@ export default function StepEditRes() {
 
   const handlePretrazi = async () => {
     setLoading(true);
-    const data = await pretraziRezervacijuZaIzmenu(token);
+    const data = await pretraziRezervaciju(token);
     if (!data) {
-      setPoruka("Rezervacija nije pronađena.");
+      setPoruka("Rezervacija sa unetim tokenom nije pronađena.");
       setLoading(false);
       return;
     }
@@ -86,8 +85,6 @@ export default function StepEditRes() {
     const novaLista = postoji
       ? izabraniDani.filter((d) => d.datum_trke !== datum)
       : [...izabraniDani, { datum_trke: datum, zona_id, cena: novaCena }];
-
-    console.log(novaLista);
 
     setIzabraniDani(novaLista);
     await izracunajCenu(novaLista);
@@ -146,6 +143,7 @@ export default function StepEditRes() {
           <button
             onClick={handlePretrazi}
             className="px-6 py-2 rounded-full bg-primary-400 text-white font-semibold hover:bg-opacity-90 transition-colors pointer"
+            disabled={!token || !email}
           >
             Pretraži rezervaciju
           </button>

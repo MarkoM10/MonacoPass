@@ -22,9 +22,9 @@ export const kreirajRezervacijuService = async (data: any) => {
       },
       dan_rezervacije: {
         create: data.dani.map((dan: any) => ({
-          datum_trke: new Date(dan.datumTrke),
+          datum_trke: new Date(dan.datum_trke),
           cena: dan.cena,
-          zona_id: dan.zonaId,
+          zona_id: dan.zona_id,
         })),
       },
     },
@@ -56,6 +56,7 @@ export const prikaziRezervacijuService = async (token: string) => {
     },
   });
 };
+
 export const izmeniStatusRezervacijeService = async (
   id: number,
   status: string
@@ -84,28 +85,27 @@ export const prikaziSveRezervacijeService = async () => {
   });
 };
 
-export const obrisiRezervacijuService = async (id: number) => {
-  const postoji = await prisma.rezervacija.findUnique({ where: { id } });
-  if (!postoji) return null;
+export const otkaziRezervacijuService = async (id: number) => {
+  const rezervacija = await prisma.rezervacija.findUnique({ where: { id } });
+  if (!rezervacija) return null;
 
-  await prisma.rezervacija.delete({ where: { id } });
-  return true;
-};
-
-export const pronadjiRezervacijuPoTokenuEmailu = async (
-  token: string,
-  email: string
-) => {
-  return prisma.rezervacija.findFirst({
-    where: {
-      token,
-      kupac: { email },
-    },
-    include: {
-      dan_rezervacije: true,
-      kupac: true,
-    },
+  await prisma.rezervacija.update({
+    where: { id },
+    data: { status: "Otkazana" },
   });
+
+  const promoKod = await prisma.promo_kod.findFirst({
+    where: { rezervacija_id: id },
+  });
+
+  if (promoKod) {
+    await prisma.promo_kod.update({
+      where: { kod: promoKod.kod },
+      data: { status: "Nevažeći" },
+    });
+  }
+
+  return true;
 };
 
 export const obracunajCenu = async (
@@ -127,27 +127,17 @@ export const obracunajCenu = async (
     const promo = await prisma.promo_kod.findUnique({
       where: { kod: promoKod },
     });
-    if (promo && promo.iskoriscen_od_kupca_id === null) {
+    if (
+      promo &&
+      promo.status === "Aktivan" &&
+      promo.iskoriscen_od_kupca_id === null
+    ) {
       ukupnaCena *= 0.95;
     }
   }
 
   const finalnaCena = ukupnaCena * (1 - popust - earlyBird);
   return parseFloat(finalnaCena.toFixed(2));
-};
-
-export const proveriDostupnostMesta = async (
-  datumTrke: Date,
-  zonaId: number
-): Promise<boolean> => {
-  const zona = await prisma.zona.findUnique({ where: { id: zonaId } });
-  if (!zona) return false;
-
-  const brojRezervacija = await prisma.dan_rezervacije.count({
-    where: { datum_trke: datumTrke, zona_id: zonaId },
-  });
-
-  return brojRezervacija < zona.kapacitet;
 };
 
 export const izmeniRezervacijuService = async (

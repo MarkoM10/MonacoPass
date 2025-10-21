@@ -1,10 +1,10 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 
-export interface IAlert {
+export type IAlert = {
   show: boolean;
   success: boolean;
   message: string;
-}
+};
 
 const initialState: IAlert = {
   show: false,

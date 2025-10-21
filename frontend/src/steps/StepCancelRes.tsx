@@ -22,7 +22,7 @@ export default function StepCancelRes() {
     setRezervacija(null);
     const data = await pretraziRezervaciju(token);
     if (!data) {
-      setGreska("Nevažeći token.");
+      setGreska("Rezervacija sa unetim tokenom nije pronađena.");
     } else if (data.kupac?.email !== email) {
       setGreska("Email ne odgovara rezervaciji.");
     } else {

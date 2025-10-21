@@ -1,12 +1,8 @@
-import {
-  DanPayload,
-  KreirajRezervacijuPayload,
-  KupacPayload,
-} from "../types/types";
+import { Dan, KreirajRezervacijuPayload, KupacPayload } from "../types/types";
 
 export const kreirajPayloadRezervacije = (
   kupac: KupacPayload,
-  dani: DanPayload[],
+  dani: Dan[],
   promoKod?: string
 ): KreirajRezervacijuPayload => {
   return {
