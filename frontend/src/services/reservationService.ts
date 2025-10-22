@@ -16,6 +16,7 @@ export const izracunajCenuRezervacije = async (
     "http://localhost:5000/rezervacija/obracunaj-cenu",
     payload
   );
+  console.log(response);
   return response.data;
 };
 

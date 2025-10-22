@@ -103,11 +103,7 @@ export const izmeniRezervaciju = async (req: Request, res: Response) => {
     }
 
     const novaCena = await obracunajCenu(dani);
-    const izmenjena = await izmeniRezervacijuService(
-      rezervacija.id,
-      dani,
-      novaCena
-    );
+    const izmenjena = await izmeniRezervacijuService(rezervacija.id, dani);
 
     res.status(200).json({
       poruka: "Rezervacija uspešno izmenjena",
@@ -122,19 +118,10 @@ export const izmeniRezervaciju = async (req: Request, res: Response) => {
 export const obracunajCenuController = async (req: Request, res: Response) => {
   try {
     const { dani, promoKod } = req.body;
-    const brojDana = dani.length;
-    const popustNaDane = brojDana <= 1 ? 0 : brojDana === 2 ? 0.1 : 0.2;
-    const earlyBird = new Date() < new Date("2025-05-01") ? 0.1 : 0;
 
-    const finalna = await obracunajCenu(dani, promoKod);
-    const ukupna = finalna / (1 - popustNaDane - earlyBird);
+    const rezultat = await obracunajCenu(dani, promoKod);
 
-    res.status(200).json({
-      ukupna: parseFloat(ukupna.toFixed(2)),
-      popustNaDane,
-      earlyBird,
-      finalna,
-    });
+    res.status(200).json(rezultat);
   } catch (error) {
     console.error("Greška pri obračunu cene:", error);
     res.status(500).json({ error: "Greška pri obračunu cene" });

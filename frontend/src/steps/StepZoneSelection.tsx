@@ -17,6 +17,8 @@ export default function StepZoneSelection() {
   const dispatch = useDispatch();
   const dani = useSelector((state: RootState) => state.reservation.dani);
 
+  console.log(dani);
+
   //Local state
   const [zone, setZone] = useState<ZonaSelection[]>([]);
   const [loading, setLoading] = useState(true);

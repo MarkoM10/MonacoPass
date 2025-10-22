@@ -111,18 +111,24 @@ export const otkaziRezervacijuService = async (id: number) => {
 export const obracunajCenu = async (
   dani: { datum_trke: Date; zona_id: number }[],
   promoKod?: string
-): Promise<number> => {
+): Promise<{
+  ukupna: number;
+  promoPopust: number;
+  popustNaDane: number;
+  earlyBird: number;
+  finalna: number;
+}> => {
   const brojDana = dani.length;
-  const popust = brojDana <= 1 ? 0 : brojDana === 2 ? 0.1 : 0.2;
-  const earlyBird = new Date() < new Date("2025-05-01") ? 0.1 : 0;
+  const popustNaDane = brojDana <= 1 ? 0 : brojDana === 2 ? 0.1 : 0.2;
+  const earlyBird = new Date() < new Date("2025-10-23") ? 0.1 : 0;
 
-  let ukupnaCena = 0;
-
+  let ukupna = 0;
   for (const dan of dani) {
     const zona = await prisma.zona.findUnique({ where: { id: dan.zona_id } });
-    if (zona) ukupnaCena += Number(zona.cena);
+    if (zona) ukupna += Number(zona.cena);
   }
 
+  let promoPopust = 0;
   if (promoKod) {
     const promo = await prisma.promo_kod.findUnique({
       where: { kod: promoKod },
@@ -132,18 +138,25 @@ export const obracunajCenu = async (
       promo.status === "Aktivan" &&
       promo.iskoriscen_od_kupca_id === null
     ) {
-      ukupnaCena *= 0.95;
+      promoPopust = 0.05;
     }
   }
 
-  const finalnaCena = ukupnaCena * (1 - popust - earlyBird);
-  return parseFloat(finalnaCena.toFixed(2));
+  const cenaSaPromo = ukupna * (1 - promoPopust);
+  const finalna = cenaSaPromo * (1 - popustNaDane - earlyBird);
+
+  return {
+    ukupna: parseFloat(ukupna.toFixed(2)),
+    promoPopust,
+    popustNaDane,
+    earlyBird,
+    finalna: parseFloat(finalna.toFixed(2)),
+  };
 };
 
 export const izmeniRezervacijuService = async (
   rezervacijaId: number,
-  dani: { datum_trke: Date; zona_id: number }[],
-  novaCena: number
+  dani: { datum_trke: Date; zona_id: number }[]
 ) => {
   await prisma.dan_rezervacije.deleteMany({
     where: { rezervacija_id: rezervacijaId },

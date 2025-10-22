@@ -36,6 +36,7 @@ export default function StepSummary() {
     popustNaDane: 0,
     earlyBird: 0,
     finalna: 0,
+    promoPopust: 0,
   });
 
   const daniZaSlanje: Dan[] = dani.map((d) => {
@@ -138,15 +139,19 @@ export default function StepSummary() {
             <div className="text-gray-500">Računam cenu...</div>
           ) : (
             <div className="space-y-1">
-              <div>Ukupna cena bez popusta: {cenaInfo.ukupna.toFixed(2)} €</div>
+              <div>Ukupna cena bez popusta: {cenaInfo.ukupna} €</div>
               <div>
                 Popust na broj dana: {(cenaInfo.popustNaDane * 100).toFixed(0)}%
               </div>
               <div>
                 Early bird popust: {(cenaInfo.earlyBird * 100).toFixed(0)}%
               </div>
+              <div>
+                Promo popust: {((cenaInfo.promoPopust ?? 0) * 100).toFixed(0)}%
+              </div>
+
               <div className="font-bold">
-                Ukupno za naplatu: {cenaInfo.finalna.toFixed(2)} €
+                Ukupno za naplatu: {cenaInfo.finalna} €
               </div>
             </div>
           )}

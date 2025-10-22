@@ -1,5 +1,8 @@
 import { Request, Response } from "express";
-import { prikaziSveZoneService } from "../services/zona.service";
+import {
+  filtrirajZoneService,
+  prikaziSveZoneService,
+} from "../services/zona.service";
 
 export const prikaziSveZone = async (req: Request, res: Response) => {
   try {

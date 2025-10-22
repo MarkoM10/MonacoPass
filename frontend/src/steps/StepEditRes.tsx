@@ -178,7 +178,7 @@ export default function StepEditRes() {
             </div>
           ))}
           <div className="space-y-1">
-            <div>Ukupna cena bez popusta: {cenaInfo.ukupna.toFixed(2)} €</div>
+            <div>Ukupna cena bez popusta: {cenaInfo.ukupna} €</div>
             <div>
               Popust na broj dana: {(cenaInfo.popustNaDane * 100).toFixed(0)}%
             </div>
@@ -186,7 +186,7 @@ export default function StepEditRes() {
               Early bird popust: {(cenaInfo.earlyBird * 100).toFixed(0)}%
             </div>
             <div className="font-bold">
-              Ukupno za naplatu: {cenaInfo.finalna.toFixed(2)} €
+              Ukupno za naplatu: {cenaInfo.finalna} €
             </div>
           </div>
           <button

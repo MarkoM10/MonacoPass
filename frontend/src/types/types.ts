@@ -42,6 +42,7 @@ export type CenaInfo = {
   popustNaDane: number;
   earlyBird: number;
   finalna: number;
+  promoPopust?: number;
 };
 
 export type CenaRequest = {
